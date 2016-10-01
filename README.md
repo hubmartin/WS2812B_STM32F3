@@ -1,5 +1,5 @@
-# ws2812b_stm32F3
-This is a fast implementation WS2812B library for STM32 processors.
+# LowMEM ws2812b, ws2812b_stm32F3
+This is a memory and CPU efficient implementation of WS2812B library for STM32 processors.
 
 The example is implemented for STM32F3 line with TIM2. It is possible to change the code to work based on other timer or STM F1, F2 or F4 line. This version is using STM HAL library.
 
@@ -102,6 +102,9 @@ Bit-banding can also improve the speed of set pixel function in the OctoWS2811 l
 **Comparison of different methods generating WS2812B waveforms is also on my site**
 http://www.martinhubacek.cz/arm/improved-stm32-ws2812b-library
 
+On the image below is in yellow waveform for WS2812B LED strip. Blue trace displays in HIGH state when the CPU is doing bit-juggling in the DMA IRQ. The first blue peak is DMA half transfer IRQ, the second peak is DMA complete transfer IRQ. On my board I don't have external crystal so instead of 72MHz I run only 64Mhz. The CPU overhead during transfer is 11% and the IRQ routine takes 3.6 microseconds.
+
+![alt tag](https://github.com/hubmartin/ws2812b_stm32F3/blob/master/WS2812%20scope%20waveform.png)
 
 ##Pros and Cons
 Pros are when you use less paralel strips on the same GPIO port. You can efficiently use your RAM. But when you use more and more LED strips on the same port, the background overhead of bit-juggling takes more time and the CPU will be more busy. This applies only when you are sending data. If your update rate is 60FPS and you have plenty time between frames - you can do your CPU intensive computation between the LED transfers.
