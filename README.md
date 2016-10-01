@@ -13,11 +13,20 @@ The octo lib is great when you use lot of parallel strips. Because it can output
 
 Based on your longest LED strip the library creates an array uint16_r buffer[NUMBER_OF_LEDS × 24]. So if you use one strip with ten LEDs then it creates the uint16_t array of length 240 (480 bytes) where only one bit of each item in array is used. So you are wasting 93% of your array in RAM. If you have LED strip connected to the pin PB3 then the 3rd bit of each item in array is used. This is because DMA needs pre-processed data in specific format. I can do better.
 
-My library has more improvements:
-#One separate buffer for your (big) framebuffer and second internal bit-buffer for DMA.
+##My library has few improvements:
+
+### One separate buffer for your (big) framebuffer and second internal bitbuffer for DMA.
 RGB framebuffer - this is one dimension array with {R1, G1, B1, R2, G2, B2, ...} format.
+Bitbuffer - this is basicaly the same format buffer like the Octo2811 lib uses but it is allocated only for 2 LEDs (2 LEDs on each of 16 output channels)
 
-Bit-buffer - this is basicaly the same format buffer like the Octo2811 lib uses but it is big only for 2 LEDs (2 LEDs on each of 16 output channels)
+**Here is the improvement.** I fill the bitbuffer on-the-fly in the double-buffering fashion based on DMA_HALF_TRANSFER and DMA_COMPLETE_TRANSFER interrupts. While the data to the first LED is fed, I prepare the next 24 bits in the second part of the bitbuffer for the second LED in the DMA Irq handler in the background. This IRQ bit-juggling was optimized so it's just a small overhead - I'll explain that down below. And while the data from the second part of bitbuffer is send to the second LED, the DMA Half transfer interrupt is fired and in it are prepared another 24 bit data for first LED.
 
-*Here is the improvement.* I fill the bit-buffer on-the-fly in the double-buffering fashion based on DMA_HALF_TRANSFER and DMA_COMPLETE_TRANSFER interrupts. 
+### Bit-banding for bit-juggling in the IRQ
+Interrupts has to be very fast. Thats why I tried many ways to "serialize" the bits from framebuffer to bitbuffer. The best solution is to use bit-banding (don't confuse with bit-banging). This is HW accelerated access to single bits in RAM and I've made a practical video some time ago https://www.youtube.com/watch?v=h78DyF1NOio
+
+Because the bits are computed on the background during the transmittion, there is little CPU overhead. For one LED strip it is on 64MHz STM32F3 just about 8% **only during** transmission of the data. The overhead is bigger as you use more parallel LED strips on the same port. It can be like 10% for two LEDs but it don't rise linearly. You have to take into account overhead of IRQ service routine, clearing IRQ bits. The bit-juggling with bit-banding implementation is quite efficient.
+
+
+##Pros and Cons
+Pros are when you use less paralel strips on the same GPIO port. You can efficiently use your RAM. But when you use more and more LED strips on the same port, the background overhead of bit-juggling takes more time and the CPU will be more busy. This applies only when you are sending data. If your update rate is 60FPS and you have plenty time between frames - you can do your CPU intensive computation between the LED transfers.
 
