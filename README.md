@@ -1,6 +1,8 @@
 # LowMEM ws2812b library ( ws2812b_stm32F3 )
 This is a memory and CPU efficient implementation of WS2812B library for STM32 processors. **You have to compile it with -Og or at least -O1 optimizations to take advantage of it.**
 
+**See my other repositories for F0 and F4 port.**
+
 The example is implemented for STM32F3 line with TIM2. Project is made in Atollic TrueStudio but you can compile it with any ARM-GCC. It is possible to change the code to work based on other timer or STM F1, F2 or F4 line. This version is using STM HAL library.
 
 
